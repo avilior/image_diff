@@ -1,0 +1,8 @@
+version: '2'
+services:
+  image_compare:
+    build: .
+    image: compare_image
+    ports:
+      - "8080:80"
+    container_name: compare_image
