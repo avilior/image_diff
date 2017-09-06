@@ -34,9 +34,8 @@ ADD /compare_image /app/compare_image
 EXPOSE 80
 
 WORKDIR /app/compare_image
-RUN mkdir -p uploads
 
 ENTRYPOINT ["python", "main.py"]
-CMD ["--host", "0.0.0.0", "--port", "80"]
+CMD ["--host", "0.0.0.0", "--port", "80", "--upload", "/tmp/uploads"]
 
 

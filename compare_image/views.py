@@ -7,6 +7,10 @@ import uuid
 from aiohttp import web
 from aiohttp_session import get_session
 
+from bokeh.layouts import gridplot
+from bokeh.plotting import figure
+from bokeh.embed import components
+
 import image_ops
 
 logger = logging.getLogger(__name__)
@@ -27,6 +31,7 @@ async def index(request):
 
 
 async def upload_image_handler(request):
+
     session = await get_session(request)
     session['last_access'] = time.time()
     logging.debug(F"{session.identity}:{session}")
@@ -54,9 +59,8 @@ async def upload_image_handler(request):
     if filename is None or len(filename) == 0:
         return web.Response(status=400, text="Missing Filename.")
 
-    uid = session['uid']
-
-    upload_dir_path = os.path.join(ROOT_PATH,'uploads',uid)
+    # users upload directory
+    upload_dir_path = os.path.join(request.app["upload_dir"],session['uid'])
 
     # check if there is a directory for the user session in uploads
     if not os.path.exists(upload_dir_path):
@@ -81,13 +85,6 @@ async def upload_image_handler(request):
     session.changed()
 
     return web.HTTPFound('/diff')
-
-
-
-# TODO move the following somewhere else
-from bokeh.layouts import gridplot
-from bokeh.plotting import figure
-from bokeh.embed import components
 
 
 def render_sideby_side2(left_image_name,right_image_name, upload_resource, uid):
@@ -176,10 +173,8 @@ async def image_diff(request):
         session["session_data"] = {}
 
 
-
-    # upload directory
-    uid = session['uid']
-    upload_dir_path = os.path.join(ROOT_PATH, 'uploads', uid)
+    # users upload directory
+    upload_dir_path = os.path.join(request.app["upload_dir"], session['uid'])
 
     session_data = session["session_data"]
 
@@ -230,8 +225,8 @@ async def do_diff_computation(request):
     """
     session = await get_session(request)
 
-    uid = session['uid']
-    upload_dir_path = os.path.join(ROOT_PATH, 'uploads', uid)
+    # users upload directory
+    upload_dir_path = os.path.join(request.app["upload_dir"], session['uid'])
 
     template_context = {}
     template_context["data"] = session["session_data"]
@@ -240,7 +235,7 @@ async def do_diff_computation(request):
     # get both files - and if both dont exists then we are done
     try:
         # take care of the left and right images
-        code, script_and_div = render_sideby_side(uid, upload_resource, session["session_data"])
+        code, script_and_div = render_sideby_side(session['uid'], upload_resource, session["session_data"])
         if code !=  0:
             # cant render plots for side by side image
             return web.HTTPFound('/diff') # go back to diff
@@ -281,7 +276,7 @@ async def do_diff_computation(request):
 
 
             if "marked_l" in result and "marked_r" in result:
-                code, script_and_div = render_sideby_side2(result["marked_l"],result["marked_r"], upload_resource, uid)
+                code, script_and_div = render_sideby_side2(result["marked_l"],result["marked_r"], upload_resource, session['uid'])
                 if code == 0:
                     diff_result["diff_image_display"] = script_and_div
 
