@@ -4,6 +4,7 @@ import time
 import os
 import sys
 import argparse
+import concurrent.futures
 
 import aiohttp
 import aiohttp_jinja2
@@ -36,9 +37,11 @@ async def worker(app):
     except Exception as x:
         print(f"Worker got exception {x}")
 
+
 async def start_background_tasks(app):
     task = app.loop.create_task(worker(app))
     app['worker'] = task
+
 
 async def clean_background_tasks(app):
     app['worker'].cancel()
@@ -68,6 +71,11 @@ def main(host_ip, port, upload_dir):
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
     app["upload_dir"] = upload_dir
+
+    process_pool_executor = concurrent.futures.ProcessPoolExecutor(
+        max_workers=3,
+    )
+    app["process_pool_executor"] = process_pool_executor
 
 
     static_dir = os.path.join(root_path, 'static')

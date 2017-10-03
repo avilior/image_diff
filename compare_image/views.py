@@ -4,6 +4,8 @@ import sys
 import time
 import uuid
 
+import asyncio
+
 from aiohttp import web
 from aiohttp_session import get_session
 
@@ -152,6 +154,7 @@ def render_sideby_side(uid, upload_resource, session_data):
 
 
 async def image_diff(request):
+
     session = await get_session(request)
 
     if session.new:
@@ -249,8 +252,20 @@ async def do_diff_computation(request):
         left_image = os.path.join(upload_dir_path,session['session_data']["left_image"]["filename"] )
         right_image = os.path.join(upload_dir_path, session['session_data']["right_image"]["filename"])
 
-        # TODO: this can take a long time so we should allocate the work to a seperate thread
-        code, result = image_ops.workon_images(left_image, right_image, upload_dir_path)
+        # ########################################################################################################
+        # Computing the diff takes a long time - pass it to the a process pool executor
+        # ########################################################################################################
+
+        process_pool_executor = request.app["process_pool_executor"]
+
+        # get the event loop -- get it from app or asyncio
+        loop = request.app.loop
+        # do i need a partial?
+        future1 = loop.run_in_executor(process_pool_executor, image_ops.workon_images, left_image, right_image, upload_dir_path)
+
+        code, result = await future1
+
+        # code, result = image_ops.workon_images(left_image, right_image, upload_dir_path)
         if code == 0:
             # TODO add the result to the data session and render the page
 
