@@ -13,7 +13,7 @@ cycler==0.10.0
 decorator==4.1.2
 idna==2.6
 imutils==0.4.3
-Jinja2==2.9.6
+Jinja2==2.11.3
 MarkupSafe==1.0
 matplotlib==2.0.2
 multidict==3.1.3
