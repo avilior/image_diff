@@ -32,7 +32,7 @@ requests==2.32.2
 scikit-image==0.13.0
 scipy==0.19.1
 six==1.10.0
-tornado==6.4.2
+tornado==6.5.1
 urllib3==1.26.19
 uvloop==0.8.0
 yarl==0.12.0
